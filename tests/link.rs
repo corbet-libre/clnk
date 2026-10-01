@@ -170,6 +170,79 @@ shared!(room_requests_use_only_the_separate_owner_client, {
     assert_eq!(link.state(), State::Disconnected);
 });
 
+shared!(room_combined_input_boundary_holds_for_all_operations, {
+    use std::{cell::RefCell, rc::Rc};
+    let authenticated = Rc::new(RefCell::new(Vec::new()));
+    let anonymous = Rc::new(RefCell::new(Vec::new()));
+    let mut link = Link::new(RecordingOwner {
+        expected: cfrm::Requirement::Credential,
+        calls: authenticated.clone(),
+    });
+    assert_eq!(
+        futures_executor::block_on(link.connect(ChallengeInput {
+            credential: vec![7]
+        })),
+        Err(ErrorCode::AuthorityUnavailable)
+    );
+    let link = link.with_anonymous_rooms(RecordingOwner {
+        expected: cfrm::Requirement::AnonymousRoomPass,
+        calls: anonymous.clone(),
+    });
+    assert_eq!(link.state(), State::Unavailable);
+    assert_eq!(authenticated.borrow().len(), 1);
+    let mut expected_anonymous = 0;
+    for op in ["order", "relay", "resume", "handover"] {
+        for input in [
+            RoomInput {
+                room_pass: vec![1; MAX_ROOM_INPUT_BYTES - 1],
+                command: vec![2],
+            },
+            RoomInput {
+                room_pass: vec![1],
+                command: vec![2; MAX_ROOM_INPUT_BYTES - 1],
+            },
+        ] {
+            let result = match op {
+                "order" => futures_executor::block_on(link.room_order(input)),
+                "relay" => futures_executor::block_on(link.room_relay(input)),
+                "resume" => futures_executor::block_on(link.room_resume(input)),
+                "handover" => futures_executor::block_on(link.room_handover(input)),
+                _ => unreachable!(),
+            };
+            assert_eq!(result, Err(ErrorCode::AuthorityUnavailable));
+            expected_anonymous += 1;
+            assert_eq!(anonymous.borrow().len(), expected_anonymous);
+            assert_eq!(authenticated.borrow().len(), 1);
+            assert_eq!(link.state(), State::Unavailable);
+        }
+        for input in [
+            RoomInput {
+                room_pass: vec![1; MAX_ROOM_INPUT_BYTES],
+                command: vec![2],
+            },
+            RoomInput {
+                room_pass: vec![1],
+                command: vec![2; MAX_ROOM_INPUT_BYTES],
+            },
+        ] {
+            let result = match op {
+                "order" => futures_executor::block_on(link.room_order(input)),
+                "relay" => futures_executor::block_on(link.room_relay(input)),
+                "resume" => futures_executor::block_on(link.room_resume(input)),
+                "handover" => futures_executor::block_on(link.room_handover(input)),
+                _ => unreachable!(),
+            };
+            assert_eq!(result, Err(ErrorCode::TooLarge));
+            assert_eq!(anonymous.borrow().len(), expected_anonymous);
+            assert_eq!(authenticated.borrow().len(), 1);
+            assert_eq!(link.state(), State::Unavailable);
+        }
+    }
+    assert_eq!(expected_anonymous, 8);
+    assert_eq!(anonymous.borrow().len(), 8);
+    assert_eq!(authenticated.borrow().len(), 1);
+});
+
 shared!(
     anonymous_outage_or_cancellation_never_uses_authenticated_fallback,
     {
