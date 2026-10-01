@@ -30,3 +30,10 @@ current authority, replacement/expiry races, cancellation, complete local
 withdrawal on disconnect and unlinkability of room and presence sessions.
 Current generated-owner ports and remaining integration are listed in
 [the contract](docs/CONTRACT.md).
+
+`Link::with_anonymous_rooms` consumes the authentication-only Link and attaches a
+separate generated client. Only the resulting type exposes the four owner room
+requests; the owner DTO contains only pass and command fields. Link adds no
+authenticated `Possession` field. Both classes still receive typed owner refusals. The embedding
+runtime must establish actual HTTPS session unlinkability; these local routing
+tests do not demonstrate it.
