@@ -76,3 +76,10 @@ shared!(cancelled_connect_has_no_stale_presence, {
     drop(attempt);
     assert_eq!(link.state(), State::Disconnected);
 });
+
+// Link maintained profiling support only into the instrumented test binary.
+#[cfg(all(target_arch = "wasm32", owned_browser_coverage))]
+#[wasm_bindgen_test::wasm_bindgen_test]
+fn profiling_runtime_is_linked() {
+    let _ = browser_coverage_runtime::__owned_test_module_signature();
+}

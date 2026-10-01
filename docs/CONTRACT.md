@@ -3,7 +3,10 @@
 Board owns one non-cloneable Link for a device/community runtime. Link contains
 the Forum's actual generated `Client<T>` and reuses `ChallengeInput`, `Request`
 and `ErrorCode`; it owns no copied action table, endpoint schema or verifier.
-The embedding runtime supplies one exact-origin HTTPS transport capability.
+The embedding runtime supplies the authenticated exact-origin HTTPS transport
+capability. Link also owns the separate anonymous room session required by the
+privacy contract. Its blind-pass client port is not yet available; authenticated
+credentials and session identifiers must never be reused for room traffic.
 
 The current generated Forum response has no success constructor. `connect`
 therefore reports a typed refusal and can never claim presence. Empty/overlarge
