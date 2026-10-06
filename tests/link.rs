@@ -36,7 +36,7 @@ shared!(actual_forum_refusal_never_creates_presence, {
     assert_eq!(link.state(), State::Disconnected);
     assert_eq!(
         futures_executor::block_on(link.connect(ChallengeInput {
-            credential: vec![1]
+            publication: vec![1]
         })),
         Err(ErrorCode::AuthorityUnavailable)
     );
@@ -45,14 +45,15 @@ shared!(actual_forum_refusal_never_creates_presence, {
     assert_eq!(link.state(), State::Disconnected);
     for bytes in [vec![], vec![0; MAX_CREDENTIAL_BYTES + 1]] {
         assert!(
-            futures_executor::block_on(link.connect(ChallengeInput { credential: bytes })).is_err()
+            futures_executor::block_on(link.connect(ChallengeInput { publication: bytes }))
+                .is_err()
         );
         assert_eq!(link.state(), State::Disconnected);
     }
     let mut offline = Link::new(Offline);
     assert_eq!(
         futures_executor::block_on(offline.connect(ChallengeInput {
-            credential: vec![1]
+            publication: vec![1]
         })),
         Err(ErrorCode::Transport)
     );
@@ -65,7 +66,7 @@ shared!(cancelled_connect_has_no_stale_presence, {
     };
     let mut link = Link::new(Pending);
     let mut attempt = Box::pin(link.connect(ChallengeInput {
-        credential: vec![1],
+        publication: vec![1],
     }));
     assert!(matches!(
         attempt
@@ -102,7 +103,7 @@ shared!(room_requests_use_only_the_separate_owner_client, {
     });
     assert_eq!(
         futures_executor::block_on(link.connect(ChallengeInput {
-            credential: vec![7]
+            publication: vec![7]
         })),
         Err(ErrorCode::AuthorityUnavailable)
     );
@@ -160,7 +161,7 @@ shared!(room_requests_use_only_the_separate_owner_client, {
     assert_eq!(anonymous.borrow().len(), 5);
     assert_eq!(
         futures_executor::block_on(link.connect(ChallengeInput {
-            credential: vec![6]
+            publication: vec![6]
         })),
         Err(ErrorCode::AuthorityUnavailable)
     );
@@ -180,7 +181,7 @@ shared!(room_combined_input_boundary_holds_for_all_operations, {
     });
     assert_eq!(
         futures_executor::block_on(link.connect(ChallengeInput {
-            credential: vec![7]
+            publication: vec![7]
         })),
         Err(ErrorCode::AuthorityUnavailable)
     );
@@ -253,7 +254,7 @@ shared!(
         let mut link = Link::new(Owner).with_anonymous_rooms(Offline);
         assert_eq!(
             futures_executor::block_on(link.connect(ChallengeInput {
-                credential: vec![1]
+                publication: vec![1]
             })),
             Err(ErrorCode::AuthorityUnavailable)
         );
@@ -269,7 +270,7 @@ shared!(
         let mut link = Link::new(Owner).with_anonymous_rooms(Pending);
         assert_eq!(
             futures_executor::block_on(link.connect(ChallengeInput {
-                credential: vec![1]
+                publication: vec![1]
             })),
             Err(ErrorCode::AuthorityUnavailable)
         );
