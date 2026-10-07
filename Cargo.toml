@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 description = "Link for device-side community composition"
-repository = "https://github.com/corbet-foss/clnk"
+repository = "https://git.corbet.ch/corbet-foss/clnk"
 license = "LGPL-3.0-only WITH LGPL-3.0-linking-exception"
 
 [lib]
@@ -13,7 +13,7 @@ crate-type = ["rlib"]
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 schemars = "1"
-cfrm = { git = "https://github.com/corbet-libs/cfrm", branch = "main", default-features = false }
+cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm", branch = "main", default-features = false }
 
 [dev-dependencies]
 futures-executor = "0.3"
