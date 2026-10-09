@@ -58,7 +58,7 @@ checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 [[package]]
 name = "cfrm"
 version = "0.2.0"
-source = "git+https://git.corbet.ch/corbet-libs/cfrm?branch=main#14136269af06a07ecf61ace4d5a694fab750c051"
+source = "git+https://git.corbet.ch/corbet-libs/cfrm?branch=main#5c749458ded6ba69a525d2a6d0e0dcf638a40e42"
 dependencies = [
  "schemars",
  "serde",
