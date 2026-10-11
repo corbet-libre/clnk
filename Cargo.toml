@@ -26,6 +26,7 @@ schemars = "1"
 cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "v01", default-features = false }
 
 [dev-dependencies]
+blind-rsa-signatures = { version = "0.18", default-features = false }
 futures-executor = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]

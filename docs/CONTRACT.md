@@ -35,3 +35,16 @@ refusal natively and in actual Wasm. An anonymous outage has no authenticated
 fallback and cannot alter authenticated state. They establish local client
 plumbing only, not HTTPS interoperability, current admission or end-to-end
 behavior. Real HTTPS/device authority evidence remains required for acceptance.
+
+`order_room` returns a borrowed, nonserializable `OrderedRoom` only after the
+existing anonymous transport acknowledges the exact pass-signed Order request
+with the expected generation and next counter. It retains the command, anonymous
+connection, common pass epoch/incarnation and actual Link clock. Its currentness
+check cannot use a caller-selected time. A changed generation or counter needs
+reconciliation; cancellation creates no acknowledgement, and an exact operation
+retry uses Assembly's existing receipt. The typed response must match the action.
+This capability authenticates only transport ordering. Threads must separately
+verify the exact MLS candidate, consent and current member state before the
+shared device checkpoint can accept it. It never proves a roster, fork count or
+listing winner. External commits must already be privately wrapped by the member
+protocol before they reach this opaque transport boundary.

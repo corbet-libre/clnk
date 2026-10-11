@@ -9,6 +9,7 @@ pub use cfrm::BrowserTransport;
 pub use cfrm::HttpTransport;
 pub use cfrm::{ChallengeInput, ErrorCode, RoomInput, Transport};
 pub use cmmr::Clock;
+pub use rooms::OrderedRoom;
 use std::cell::{Cell, RefCell};
 
 pub const MAX_PUBLICATION_BYTES: usize = cswb::MAX_PUBLICATION_BYTES;

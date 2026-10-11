@@ -1,6 +1,8 @@
 //! Private original pass capabilities and their two distinct connection classes.
 use super::*;
+mod ordered;
 use cmbl::passes::{ClientPass, Epoch, PreparedPass};
+pub use ordered::OrderedRoom;
 use std::collections::BTreeMap;
 
 const MAX_ROOM_CAPABILITIES: usize = 32;
@@ -215,7 +217,7 @@ impl<T: Transport, R: Transport> Link<T, AnonymousRooms<R>> {
         if input.room_pass.len().saturating_add(input.command.len()) > MAX_ROOM_INPUT_BYTES {
             return Err(ErrorCode::TooLarge);
         }
-        let request = match command.action {
+        let request = match &command.action {
             cmbl::Action::Connect { .. } => cfrm::Request::RoomConnect(input),
             cmbl::Action::Renew { .. } => cfrm::Request::RoomRenew(input),
             cmbl::Action::Disconnect { .. } => cfrm::Request::RoomDisconnect(input),
@@ -228,14 +230,14 @@ impl<T: Transport, R: Transport> Link<T, AnonymousRooms<R>> {
         if scope.now()? >= common.epoch.valid_until {
             return Err(ErrorCode::ResetRequired);
         }
-        let result = match reply.response {
-            cfrm::Output::RoomConnect(v)
-            | cfrm::Output::RoomRenew(v)
-            | cfrm::Output::RoomDisconnect(v)
-            | cfrm::Output::RoomRead(v)
-            | cfrm::Output::RoomOrder(v)
-            | cfrm::Output::RoomRelay(v)
-            | cfrm::Output::RoomResume(v) => v.result,
+        let result = match (&command.action, reply.response) {
+            (cmbl::Action::Connect { .. }, cfrm::Output::RoomConnect(v))
+            | (cmbl::Action::Renew { .. }, cfrm::Output::RoomRenew(v))
+            | (cmbl::Action::Disconnect { .. }, cfrm::Output::RoomDisconnect(v))
+            | (cmbl::Action::Read { .. }, cfrm::Output::RoomRead(v))
+            | (cmbl::Action::Order { .. }, cfrm::Output::RoomOrder(v))
+            | (cmbl::Action::Relay { .. }, cfrm::Output::RoomRelay(v))
+            | (cmbl::Action::Resume { .. }, cfrm::Output::RoomResume(v)) => v.result,
             _ => return Err(ErrorCode::Transport),
         };
         serde_json::from_slice(&result).map_err(|_| ErrorCode::Transport)
