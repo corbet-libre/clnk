@@ -181,7 +181,7 @@ fn actual_pass_and_order_bind_exact_command_retry_generation_and_live_epoch() {
         let generation = resume(&link).await;
         let command = order();
         let receipt = link.order_room(command.clone(), generation).await.unwrap();
-        assert_eq!(receipt.command(), &command);
+        assert!(receipt.command() == &command);
         assert_eq!(receipt.counter(), 1);
         assert_eq!(receipt.ordering(), generation);
         assert_eq!(receipt.connection(), link.room_connection([1; 16]).unwrap());
