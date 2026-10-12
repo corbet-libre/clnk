@@ -7,6 +7,9 @@ mod rooms;
 pub use cfrm::BrowserTransport;
 #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
 pub use cfrm::HttpTransport;
+/// Forum calls through Oblivious HTTP over any cblv `Wire`.
+#[cfg(feature = "ohttp")]
+pub use cfrm::OhttpTransport;
 pub use cfrm::{ChallengeInput, ErrorCode, RoomInput, Transport};
 pub use cmmr::Clock;
 pub use rooms::OrderedRoom;
