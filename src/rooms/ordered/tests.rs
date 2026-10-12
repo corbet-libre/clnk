@@ -28,6 +28,7 @@ impl Transport for Peer {
             cfrm::Request::RoomResume(input) => (input, 0),
             cfrm::Request::RoomOrder(input) => (input, 1),
             cfrm::Request::RoomRead(input) => (input, 2),
+            cfrm::Request::RoomPublish(input) => (input, 3),
             _ => return Err(ErrorCode::InvalidRequest),
         };
         let command: cmbl::Request = serde_json::from_slice(&input.command).unwrap();
@@ -63,6 +64,8 @@ impl Transport for Peer {
             cfrm::Output::RoomResume(output)
         } else if kind == 2 {
             cfrm::Output::RoomRead(output)
+        } else if kind == 3 && self.mode.load(Ordering::SeqCst) != 4 {
+            cfrm::Output::RoomPublish(output)
         } else if self.mode.load(Ordering::SeqCst) == 4 {
             cfrm::Output::RoomRelay(output)
         } else {
@@ -86,6 +89,15 @@ fn setup() -> (
     Time,
     Arc<AtomicU8>,
 ) {
+    setup_room([1; 16])
+}
+fn setup_room(
+    room: cmbl::Id,
+) -> (
+    Link<NoMemberConnection, AnonymousRooms<Peer>>,
+    Time,
+    Arc<AtomicU8>,
+) {
     let time = Time(Arc::new(AtomicU64::new(100)));
     let key = KeyPair::<Sha384, PSS, Randomized>::generate(&mut DefaultRng, 3072).unwrap();
     let epoch = Epoch {
@@ -95,7 +107,7 @@ fn setup() -> (
         valid_until: 500,
         public_key_der: key.pk.to_der().unwrap(),
     };
-    let prepared = PreparedPass::new(&epoch, [1; 16], 100).unwrap();
+    let prepared = PreparedPass::new(&epoch, room, 100).unwrap();
     let signed = key.sk.blind_sign(&prepared.request().blinded).unwrap();
     let pass = prepared.finalize(&signed.0, 100).unwrap();
     let store = Arc::new(
@@ -147,7 +159,7 @@ fn setup() -> (
         epoch,
         incarnation: "boot".into(),
     });
-    link.rooms.state.passes.insert([1; 16], pass);
+    link.rooms.state.passes.insert(room, pass);
     (link, time, mode)
 }
 fn order() -> cmbl::Request {
@@ -273,5 +285,62 @@ fn cancelled_reply_creates_no_acknowledgement_and_exact_retry_reconciles() {
             .await
             .unwrap();
         assert_eq!(after_retry.frames, before_retry.frames);
+    });
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+#[cfg_attr(not(target_arch = "wasm32"), test)]
+fn publish_reaches_the_forum_room_publish_request_and_only_that_reply() {
+    use cmbl::listing::{Entry, SignedEntry, room_id};
+    futures_executor::block_on(async {
+        let key = ed25519_dalek::SigningKey::from_bytes(&[5; 32]);
+        let key_bytes = key.verifying_key().to_bytes();
+        let room = room_id(&key_bytes);
+        let (link, _, mode) = setup_room(room);
+        link.execute_room(cmbl::Request {
+            room,
+            operation: [8; 16],
+            action: cmbl::Action::Resume {
+                connection: link.room_connection(room).unwrap(),
+            },
+        })
+        .await
+        .unwrap();
+        let signed = |counter: u64, withdrawn: bool| {
+            SignedEntry::sign(
+                Entry {
+                    key: key_bytes,
+                    name: "garden".into(),
+                    description: "open room".into(),
+                    counter,
+                    expires_ms: 400,
+                    withdrawn,
+                },
+                &key,
+            )
+            .unwrap()
+        };
+        let publish = |counter: u64, withdrawn: bool, operation: u8| cmbl::Request {
+            room,
+            operation: [operation; 16],
+            action: cmbl::Action::Publish {
+                entry: signed(counter, withdrawn),
+            },
+        };
+        let first = link.execute_room(publish(2, false, 9)).await.unwrap();
+        assert_eq!(first.frames.len(), 0);
+        // An older counter is refused by the room; the failure reaches the caller.
+        assert_eq!(
+            link.execute_room(publish(1, false, 10)).await.err(),
+            Some(ErrorCode::Rejected)
+        );
+        // A signed tombstone with a newer counter withdraws the listing.
+        link.execute_room(publish(3, true, 11)).await.unwrap();
+        // A reply of another kind is never accepted for a Publish command.
+        mode.store(4, Ordering::SeqCst);
+        assert_eq!(
+            link.execute_room(publish(4, false, 12)).await.err(),
+            Some(ErrorCode::Transport)
+        );
     });
 }
