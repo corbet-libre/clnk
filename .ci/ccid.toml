@@ -11,11 +11,35 @@ cache_tools = [["rustc", "-vV"], ["cargo", "--version"], ["python3", "--version"
 cache_env = ["CLNK_WASM_CLANG"]
 cache_outputs = ["coverage.json", "coverage.lcov", "coverage.txt", "wasm-coverage.json", "wasm-coverage.lcov", "wasm-coverage.txt"]
 
+[checks.native]
+kind = "commands"
+commands = [["bash", ".ci/native.sh"]]
+cache_tools = [["rustc", "-vV"], ["cargo", "--version"]]
+cache_outputs = ["dependency-metadata.json"]
+
+[checks.resolve-dependencies]
+kind = "commands"
+commands = [["bash", ".ci/resolve-dependencies.sh"]]
+cache = false
+cache_outputs = ["Cargo.lock"]
+
 [render]
 tool_revision = "e38f347d6941aa105ac4b55a0d4b8fec2ef22433"
 
 [jobs.verify]
 scheduler = "crow"
 checks = ["verify"]
+workflow = "repository-jobs"
+command = ["bash", ".ci/run-cached.sh"]
+
+[jobs.native]
+scheduler = "crow"
+checks = ["native"]
+workflow = "repository-jobs"
+command = ["bash", ".ci/run-cached.sh"]
+
+[jobs.resolve-dependencies]
+scheduler = "crow"
+checks = ["resolve-dependencies"]
 workflow = "repository-jobs"
 command = ["bash", ".ci/run-cached.sh"]
