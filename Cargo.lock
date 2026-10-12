@@ -572,6 +572,7 @@ dependencies = [
  "cmbl",
  "cmmr",
  "cswb",
+ "ed25519-dalek",
  "futures-executor",
  "schemars",
  "serde",
