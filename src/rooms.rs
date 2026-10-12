@@ -225,6 +225,8 @@ impl<T: Transport, R: Transport> Link<T, AnonymousRooms<R>> {
             cmbl::Action::Order { .. } => cfrm::Request::RoomOrder(input),
             cmbl::Action::Relay { .. } => cfrm::Request::RoomRelay(input),
             cmbl::Action::Resume { .. } => cfrm::Request::RoomResume(input),
+            // The forum's room_publish request is not on cfrm v01 yet.
+            cmbl::Action::Publish { .. } => return Err(ErrorCode::InvalidRequest),
         };
         let reply = self.rooms.client.call(request).await?;
         if scope.now()? >= common.epoch.valid_until {
