@@ -225,8 +225,7 @@ impl<T: Transport, R: Transport> Link<T, AnonymousRooms<R>> {
             cmbl::Action::Order { .. } => cfrm::Request::RoomOrder(input),
             cmbl::Action::Relay { .. } => cfrm::Request::RoomRelay(input),
             cmbl::Action::Resume { .. } => cfrm::Request::RoomResume(input),
-            // The forum's room_publish request is not on cfrm v01 yet.
-            cmbl::Action::Publish { .. } => return Err(ErrorCode::InvalidRequest),
+            cmbl::Action::Publish { .. } => cfrm::Request::RoomPublish(input),
         };
         let reply = self.rooms.client.call(request).await?;
         if scope.now()? >= common.epoch.valid_until {
@@ -239,7 +238,8 @@ impl<T: Transport, R: Transport> Link<T, AnonymousRooms<R>> {
             | (cmbl::Action::Read { .. }, cfrm::Output::RoomRead(v))
             | (cmbl::Action::Order { .. }, cfrm::Output::RoomOrder(v))
             | (cmbl::Action::Relay { .. }, cfrm::Output::RoomRelay(v))
-            | (cmbl::Action::Resume { .. }, cfrm::Output::RoomResume(v)) => v.result,
+            | (cmbl::Action::Resume { .. }, cfrm::Output::RoomResume(v))
+            | (cmbl::Action::Publish { .. }, cfrm::Output::RoomPublish(v)) => v.result,
             _ => return Err(ErrorCode::Transport),
         };
         serde_json::from_slice(&result).map_err(|_| ErrorCode::Transport)
