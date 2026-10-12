@@ -117,7 +117,7 @@ fn setup_room(
                 records: 8,
                 value_bytes: 100_000,
                 batch: 8,
-                indexes_per_record: 0,
+                indexes_per_record: 1,
                 page: 8,
                 ttl_ms: 10_000,
             },
