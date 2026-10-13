@@ -18,13 +18,13 @@ ohttp = ["cfrm/client-ohttp"]
 
 [dependencies]
 cmbl = { git = "https://git.corbet.ch/corbet-foss/cmbl.git", branch = "main" }
-cmmr = { git = "https://git.corbet.ch/corbet-foss/cmmr.git", branch = "v01" }
-cswb = { git = "https://git.corbet.ch/corbet-foss/cswb.git", branch = "v01" }
+cmmr = { git = "https://git.corbet.ch/corbet-foss/cmmr.git", branch = "main" }
+cswb = { git = "https://git.corbet.ch/corbet-foss/cswb.git", branch = "main" }
 serde_json = "1"
 url = "2"
 serde = { version = "1", features = ["derive"] }
 schemars = "1"
-cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "v01", default-features = false }
+cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "main", default-features = false }
 
 [dev-dependencies]
 ed25519-dalek = "3"
