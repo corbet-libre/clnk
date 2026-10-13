@@ -68,7 +68,6 @@ for path in $wasm_llvm; do
   [ -x "$path/bin/llvm-ar" ] && wasm_ar="$path/bin/llvm-ar"
 done
 test -x "${wasm_cc:-}" && test -x "${wasm_ar:-}" || { echo 'unwrapped clang/llvm-ar not found' >&2; exit 2; }
-printf 'export CC_wasm32_unknown_unknown=%q AR_wasm32_unknown_unknown=%q\n' "$wasm_cc" "$wasm_ar" > "$ARTIFACT_ROOT/wasm-cc.env"
 export SOURCE_SHA256="$(git archive --format=tar HEAD | sha256sum | cut -d ' ' -f 1)"
 export CCID_SOURCE_REVISION="$CI_COMMIT_SHA"
 "$CCID_BIN" render --repo "$PWD" --check
@@ -89,5 +88,11 @@ chromium --version
 clang --version
 rustup run nightly rustc -vV
 rustup run nightly cargo llvm-cov --version
+# Checks inherit only PATH from moon, not CC_* variables. cc-rs picks `clang` and
+# `llvm-ar` from PATH for wasm32, so shadow them with the unwrapped tools (host C uses `cc`).
+mkdir -p "$state/wasm-bin"
+ln -sfn "$wasm_cc" "$state/wasm-bin/clang"
+ln -sfn "$wasm_ar" "$state/wasm-bin/llvm-ar"
+export PATH="$state/wasm-bin:$PATH"
 "$CCID_BIN" cached --repo "$PWD" --check verify
 test -s ".ccid/results/verify.jsonl"
