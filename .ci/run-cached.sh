@@ -74,10 +74,9 @@ rustc -vV
 cargo --version
 python3 --version
 curl --version
-python3 -m pip --version
 wasm-pack --version
 chromedriver --version
-google-chrome --version
+chromium --version
 clang --version
 rustup run nightly rustc -vV
 rustup run nightly cargo llvm-cov --version
