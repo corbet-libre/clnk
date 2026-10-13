@@ -46,7 +46,7 @@ def main():
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
-        driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
+        driver = webdriver.Chrome(service=Service(os.environ.get("CHROMEDRIVER", "/usr/bin/chromedriver")), options=options)
         driver.set_page_load_timeout(120)
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": """
             window.__coverageLog = [];
