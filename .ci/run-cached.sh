@@ -57,6 +57,8 @@ export PATH="$(dirname "$cargo_bin"):$PATH"
 export CARGO_INSTALL_ROOT="$state/install-bin"
 mkdir -p "$CARGO_INSTALL_ROOT/bin"
 export PATH="$CARGO_INSTALL_ROOT/bin:$PATH"
+# Coverage tool: pinned per-repo install, probed exactly (never a shared PATH guess).
+repo_install_exact cargo-llvm-cov cargo-llvm-cov 0.9.1
 export ARTIFACT_ROOT="${ARTIFACT_ROOT:-$state/release-artifacts}"
 mkdir -p "$ARTIFACT_ROOT"
 [[ "$ARTIFACT_ROOT" = /* ]] || { echo "ARTIFACT_ROOT must be absolute" >&2; exit 2; }
