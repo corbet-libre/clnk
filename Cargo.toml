@@ -17,7 +17,7 @@ browser = ["cfrm/client-browser"]
 ohttp = ["cfrm/client-ohttp"]
 
 [dependencies]
-cmbl = { git = "https://git.corbet.ch/corbet-foss/cmbl.git", branch = "v01" }
+cmbl = { git = "https://git.corbet.ch/corbet-foss/cmbl.git", branch = "main" }
 cmmr = { git = "https://git.corbet.ch/corbet-foss/cmmr.git", branch = "v01" }
 cswb = { git = "https://git.corbet.ch/corbet-foss/cswb.git", branch = "v01" }
 serde_json = "1"
