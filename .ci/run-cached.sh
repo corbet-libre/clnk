@@ -27,16 +27,6 @@ ln -sfn "$state/moon-cache/outputs" .moon/cache/outputs
 tool_source=github:NixOS/nixpkgs/b7c2ada94fe99c15b0dbcf4d11fd7850b957a436
 tool_paths=$(nix build --no-link --print-out-paths "$tool_source#moon" "$tool_source#proto" "$tool_source#python3" "$tool_source#curl" "$tool_source#wasm-pack" "$tool_source#chromedriver" "$tool_source#chromium" "$tool_source#clang" "$tool_source#cargo-llvm-cov")
 for path in $tool_paths; do PATH="$path/bin:$PATH"; done
-# wasm32 C code (minicov, under the wasm32 browser-coverage dev-dependency) needs an
-# UNWRAPPED clang and llvm-ar: the Nix wrapper targets the host and leaks glibc headers.
-wasm_llvm=$(nix build --no-link --print-out-paths "$tool_source#llvmPackages.clang-unwrapped" "$tool_source#llvmPackages.llvm")
-for path in $wasm_llvm; do
-  [ -x "$path/bin/clang" ] && wasm_cc="$path/bin/clang"
-  [ -x "$path/bin/llvm-ar" ] && wasm_ar="$path/bin/llvm-ar"
-done
-test -x "${wasm_cc:-}" && test -x "${wasm_ar:-}" || { echo 'unwrapped clang/llvm-ar not found' >&2; exit 2; }
-mkdir -p "$ARTIFACT_ROOT"
-printf 'export CC_wasm32_unknown_unknown=%q AR_wasm32_unknown_unknown=%q\n' "$wasm_cc" "$wasm_ar" > "$ARTIFACT_ROOT/wasm-cc.env"
 export PROTO_HOME="$toolchains/proto" RUSTUP_HOME="$toolchains/rustup"
 export CARGO_HOME="$toolchains/cargo" MOON_HOME="$state/moon-home"
 export PROTO_AUTO_CLEAN=false PROTO_TELEMETRY=false PROTO_YES=true
@@ -70,6 +60,15 @@ export PATH="$CARGO_INSTALL_ROOT/bin:$PATH"
 export ARTIFACT_ROOT="${ARTIFACT_ROOT:-$state/release-artifacts}"
 mkdir -p "$ARTIFACT_ROOT"
 [[ "$ARTIFACT_ROOT" = /* ]] || { echo "ARTIFACT_ROOT must be absolute" >&2; exit 2; }
+# wasm32 C code (minicov, under the wasm32 browser-coverage dev-dependency) needs an
+# UNWRAPPED clang and llvm-ar: the Nix wrapper targets the host and leaks glibc headers.
+wasm_llvm=$(nix build --no-link --print-out-paths "$tool_source#llvmPackages.clang-unwrapped" "$tool_source#llvmPackages.llvm")
+for path in $wasm_llvm; do
+  [ -x "$path/bin/clang" ] && wasm_cc="$path/bin/clang"
+  [ -x "$path/bin/llvm-ar" ] && wasm_ar="$path/bin/llvm-ar"
+done
+test -x "${wasm_cc:-}" && test -x "${wasm_ar:-}" || { echo 'unwrapped clang/llvm-ar not found' >&2; exit 2; }
+printf 'export CC_wasm32_unknown_unknown=%q AR_wasm32_unknown_unknown=%q\n' "$wasm_cc" "$wasm_ar" > "$ARTIFACT_ROOT/wasm-cc.env"
 export SOURCE_SHA256="$(git archive --format=tar HEAD | sha256sum | cut -d ' ' -f 1)"
 export CCID_SOURCE_REVISION="$CI_COMMIT_SHA"
 "$CCID_BIN" render --repo "$PWD" --check
