@@ -4,20 +4,32 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 description = "Link for device-side community composition"
-repository = "https://git.corbet.ch/corbet-foss/clnk"
+repository = "https://git.corbet.ch/corbet-foss/clnk.git"
 license = "LGPL-3.0-only WITH LGPL-3.0-linking-exception"
 
 [lib]
 crate-type = ["rlib"]
 
+[features]
+default = ["http"]
+http = ["cfrm/client-http"]
+browser = ["cfrm/client-browser"]
+ohttp = ["cfrm/client-ohttp"]
+
 [dependencies]
+cmbl = { git = "https://git.corbet.ch/corbet-foss/cmbl.git", branch = "main" }
+cmmr = { git = "https://git.corbet.ch/corbet-foss/cmmr.git", branch = "v01" }
+cswb = { git = "https://git.corbet.ch/corbet-foss/cswb.git", branch = "v01" }
+serde_json = "1"
+url = "2"
 serde = { version = "1", features = ["derive"] }
 schemars = "1"
-cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm", branch = "main", default-features = false }
+cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "v01", default-features = false }
 
 [dev-dependencies]
+ed25519-dalek = "3"
+blind-rsa-signatures = { version = "0.18", default-features = false }
 futures-executor = "0.3"
-serde_json = "1"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 browser-coverage-runtime = { path = ".ci/coverage-runtime" }
