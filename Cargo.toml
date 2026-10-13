@@ -24,7 +24,7 @@ serde_json = "1"
 url = "2"
 serde = { version = "1", features = ["derive"] }
 schemars = "1"
-cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "ohttp-on-18b6056", default-features = false }
+cfrm = { git = "https://git.corbet.ch/corbet-libs/cfrm.git", branch = "v01", default-features = false }
 
 [dev-dependencies]
 ed25519-dalek = "3"
