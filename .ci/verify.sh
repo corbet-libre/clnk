@@ -35,7 +35,8 @@ wb_base="https://github.com/wasm-bindgen/wasm-bindgen/releases/download/${versio
 mkdir -p "$RUNNER_TEMP/wasm-bindgen-cli"
 (cd "$RUNNER_TEMP/wasm-bindgen-cli" && curl --fail --location --retry 3 --remote-name "$wb_base/$wb_archive" && curl --fail --location --retry 3 --remote-name "$wb_base/$wb_archive.sha256sum" && wb_checksum=$(cut -d ' ' -f1 "$wb_archive.sha256sum") && printf '%s  %s\n' "$wb_checksum" "$wb_archive" | sha256sum --check && tar -xzf "$wb_archive" --strip-components=1)
 export PATH="$RUNNER_TEMP/wasm-bindgen-cli:$PATH"
-python3 -m pip install -r .ci/requirements.txt
+# Selenium comes from the pinned Nix tool set, not pip (nixpkgs python3 ships no pip).
+python3 -c 'import selenium' || { echo "selenium is not provisioned; browser coverage needs it" >&2; exit 2; }
 export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER="python3 .ci/browser-coverage-runner.py"
 export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS="-Zno-profiler-runtime -Clink-args=--no-gc-sections --cfg=owned_browser_coverage"
 export WASM_BINDGEN_TEST_ONLY_WEB=1 WASM_BINDGEN_SPLIT_LINKED_MODULES=1 CC_wasm32_unknown_unknown=clang

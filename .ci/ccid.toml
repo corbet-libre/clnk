@@ -8,7 +8,7 @@ repository = "https://git.corbet.ch/corbet-foss/clnk.git"
 [checks.verify]
 kind = "commands"
 commands = [["bash", ".ci/verify.sh"]]
-cache_tools = [["rustc", "-vV"], ["cargo", "--version"], ["python3", "--version"], ["python3", "-m", "pip", "--version"], ["curl", "--version"], ["wasm-pack", "--version"], ["chromedriver", "--version"], ["google-chrome", "--version"], ["clang", "--version"], ["rustup", "run", "nightly", "rustc", "-vV"], ["rustup", "run", "nightly", "cargo", "llvm-cov", "--version"]]
+cache_tools = [["rustc", "-vV"], ["cargo", "--version"], ["python3", "--version"], ["curl", "--version"], ["wasm-pack", "--version"], ["chromedriver", "--version"], ["chromium", "--version"], ["clang", "--version"], ["rustup", "run", "nightly", "rustc", "-vV"], ["rustup", "run", "nightly", "cargo", "llvm-cov", "--version"]]
 cache_outputs = ["coverage.json", "coverage.lcov", "coverage.txt", "wasm-coverage.json", "wasm-coverage.lcov", "wasm-coverage.txt"]
 
 [checks.native]
