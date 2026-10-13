@@ -6,8 +6,8 @@ exec 2>&1
 : "${CI_COMMIT_SHA:?Missing verified source revision}"
 : "${CI_REPOSITORY_URL:?Missing canonical repository identity}"
 : "${CHECKS:?Missing declared check selection}"
-if [ "$CHECKS" != "verify" ]; then
-  echo "CHECKS must be exactly 'verify', got: $CHECKS" >&2
+if [ "$CHECKS" != "verify" ] && [ "$CHECKS" != "resolve-dependencies" ] && [ "$CHECKS" != "native" ]; then
+  echo "CHECKS must be verify, resolve-dependencies or native, got: $CHECKS" >&2
   exit 2
 fi
 test -f Cargo.lock || { echo 'Cargo.lock must be present (committed snapshot)' >&2; exit 2; }
@@ -22,46 +22,11 @@ exec 9>"$state/lock"
 flock -w "${CI_TIMEOUT:-2700}" 9
 mkdir -p "$state/moon-cache/hashes" "$state/moon-cache/outputs" "$state/moon-home"
 mkdir -p .moon/cache
+ln -sfn "$state/moon-cache/hashes" .moon/cache/hashes
+ln -sfn "$state/moon-cache/outputs" .moon/cache/outputs
 tool_source=github:NixOS/nixpkgs/b7c2ada94fe99c15b0dbcf4d11fd7850b957a436
-tool_paths=$(nix build --no-link --print-out-paths "$tool_source#moon" "$tool_source#proto" "$tool_source#curl" "$tool_source#wasm-pack" "$tool_source#chromedriver" "$tool_source#chromium" "$tool_source#clang" "$tool_source#cargo-llvm-cov")
+tool_paths=$(nix build --no-link --print-out-paths "$tool_source#moon" "$tool_source#proto" "$tool_source#python3" "$tool_source#curl" "$tool_source#wasm-pack" "$tool_source#chromedriver" "$tool_source#chromium" "$tool_source#clang" "$tool_source#cargo-llvm-cov")
 for path in $tool_paths; do PATH="$path/bin:$PATH"; done
-# minicov's build script hardcodes `clang`, so every wasm32 C build uses
-# whatever `clang` resolves on PATH (currently the x86_64 nix wrapper, which
-# breaks on host glibc headers). Resolve the pinned unwrapped compiler here
-# (actual closure path from Nix at runtime, never a hardcoded store path) and
-# export it for the cache fingerprint + the wasm legs in verify.sh. It stays
-# off the global PATH so native builds keep the wrapper.
-CLNK_WASM_CLANG_BIN=""
-for out in $(nix build --no-link --print-out-paths "$tool_source#llvmPackages.clang-unwrapped"); do
-  if [ -x "$out/bin/clang" ]; then CLNK_WASM_CLANG_BIN="$out/bin"; fi
-done
-test -n "$CLNK_WASM_CLANG_BIN" || { echo 'pinned unwrapped clang provides no bin/clang' >&2; exit 2; }
-export CLNK_WASM_CLANG_BIN
-export CLNK_WASM_CLANG="$CLNK_WASM_CLANG_BIN/clang"
-"$CLNK_WASM_CLANG" --version
-# requirements.txt needs selenium plus pip; the pinned python alone provides
-# neither as usable modules here (pip probe failed), so supply a pinned
-# python3.withPackages env (selenium plus transitive deps and pip). Same
-# nixpkgs revision; no PyPI round trip while the import succeeds.
-python_env=$(nix build --no-link --print-out-paths --impure --expr '(builtins.getFlake "'"$tool_source"'").legacyPackages.${builtins.currentSystem}.python3.withPackages (p: [ p.selenium p.pip ])')
-test -n "$python_env" || { echo 'nix python selenium env resolution failed' >&2; exit 2; }
-PATH="$python_env/bin:$PATH"
-python3 -c 'import selenium; print(selenium.__version__)'
-# .ci/requirements.txt floor (>=4.49 for this family) exceeds the pinned
-# selenium (4.40.0): build an isolated job-local venv and install the real
-# requirements there. Runs on Crow outside the cached checks; fails closed
-# (no downgrade to the older base).
-export RUNNER_TEMP="${RUNNER_TEMP:-$(mktemp -d)}"
-VENV="$RUNNER_TEMP/selenium-venv"
-# --without-pip: pip always comes from the base env (below) via system site;
-# this skips ensurepip entirely so venv creation cannot fail on it.
-python3 -m venv --system-site-packages --without-pip "$VENV"
-VENV_PY="$VENV/bin/python"
-"$VENV_PY" -m pip --version
-"$VENV_PY" -m pip install -r .ci/requirements.txt
-"$VENV_PY" -c 'import selenium; print(selenium.__version__)'
-PATH="$VENV/bin:$PATH"
-python3 -m pip freeze
 export PROTO_HOME="$toolchains/proto" RUSTUP_HOME="$toolchains/rustup"
 export CARGO_HOME="$toolchains/cargo" MOON_HOME="$state/moon-home"
 export PROTO_AUTO_CLEAN=false PROTO_TELEMETRY=false PROTO_YES=true
@@ -95,27 +60,39 @@ export PATH="$CARGO_INSTALL_ROOT/bin:$PATH"
 export ARTIFACT_ROOT="${ARTIFACT_ROOT:-$state/release-artifacts}"
 mkdir -p "$ARTIFACT_ROOT"
 [[ "$ARTIFACT_ROOT" = /* ]] || { echo "ARTIFACT_ROOT must be absolute" >&2; exit 2; }
-# CI resolves google-chrome from PATH; provide the pinned chromium behind that
-# name (fingerprint and browser legs rely on it). Job-state dir, no host change.
-mkdir -p "$state/chrome-shim"
-printf '#!/bin/sh\nexec chromium "$@"\n' > "$state/chrome-shim/google-chrome"
-chmod +x "$state/chrome-shim/google-chrome"
-export PATH="$state/chrome-shim:$PATH"
+# wasm32 C code (minicov, under the wasm32 browser-coverage dev-dependency) needs an
+# UNWRAPPED clang and llvm-ar: the Nix wrapper targets the host and leaks glibc headers.
+wasm_llvm=$(nix build --no-link --print-out-paths "$tool_source#llvmPackages.clang-unwrapped" "$tool_source#llvmPackages.llvm")
+for path in $wasm_llvm; do
+  [ -x "$path/bin/clang" ] && wasm_cc="$path/bin/clang"
+  [ -x "$path/bin/llvm-ar" ] && wasm_ar="$path/bin/llvm-ar"
+done
+test -x "${wasm_cc:-}" && test -x "${wasm_ar:-}" || { echo 'unwrapped clang/llvm-ar not found' >&2; exit 2; }
 export SOURCE_SHA256="$(git archive --format=tar HEAD | sha256sum | cut -d ' ' -f 1)"
 export CCID_SOURCE_REVISION="$CI_COMMIT_SHA"
 "$CCID_BIN" render --repo "$PWD" --check
+export ARTIFACT_ROOT="${ARTIFACT_ROOT:-$state/release-artifacts}"
+mkdir -p "$ARTIFACT_ROOT"
+if [ "$CHECKS" = "resolve-dependencies" ] || [ "$CHECKS" = "native" ]; then
+  exec "$CCID_BIN" check --repo "$PWD" --check "$CHECKS"
+fi
 proto --version
 moon --version
 rustc -vV
 cargo --version
 python3 --version
 curl --version
-python3 -m pip --version
 wasm-pack --version
 chromedriver --version
-google-chrome --version
+chromium --version
 clang --version
 rustup run nightly rustc -vV
 rustup run nightly cargo llvm-cov --version
+# Checks inherit only PATH from moon, not CC_* variables. cc-rs picks `clang` and
+# `llvm-ar` from PATH for wasm32, so shadow them with the unwrapped tools (host C uses `cc`).
+mkdir -p "$state/wasm-bin"
+ln -sfn "$wasm_cc" "$state/wasm-bin/clang"
+ln -sfn "$wasm_ar" "$state/wasm-bin/llvm-ar"
+export PATH="$state/wasm-bin:$PATH"
 "$CCID_BIN" cached --repo "$PWD" --check verify
 test -s ".ccid/results/verify.jsonl"
