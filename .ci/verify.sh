@@ -13,6 +13,8 @@ export GITHUB_PATH="${GITHUB_PATH:-$RUNNER_TEMP/github_path}"
 touch "$GITHUB_PATH"
 python3 .ci/check-first-party.py
 rustc --version
+# wasm32 C toolchain written by run-cached.sh (unwrapped clang; the Nix wrapper leaks host headers).
+. "$ARTIFACT_ROOT/wasm-cc.env"
 # fmt patch gate (hosted: fmt; diff > patch; fail on non-empty)
 cargo fmt --all
 git diff -- '*.rs' > "$ARTIFACT_ROOT/formatting.patch"
