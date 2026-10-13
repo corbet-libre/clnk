@@ -25,7 +25,7 @@ mkdir -p .moon/cache
 ln -sfn "$state/moon-cache/hashes" .moon/cache/hashes
 ln -sfn "$state/moon-cache/outputs" .moon/cache/outputs
 tool_source=github:NixOS/nixpkgs/b7c2ada94fe99c15b0dbcf4d11fd7850b957a436
-tool_paths=$(nix build --no-link --print-out-paths "$tool_source#moon" "$tool_source#proto" "$tool_source#python3" "$tool_source#curl" "$tool_source#wasm-pack" "$tool_source#chromedriver" "$tool_source#chromium" "$tool_source#clang")
+tool_paths=$(nix build --no-link --print-out-paths "$tool_source#moon" "$tool_source#proto" "$tool_source#python3" "$tool_source#curl" "$tool_source#wasm-pack" "$tool_source#chromedriver" "$tool_source#chromium" "$tool_source#clang" "$tool_source#cargo-llvm-cov")
 for path in $tool_paths; do PATH="$path/bin:$PATH"; done
 export PROTO_HOME="$toolchains/proto" RUSTUP_HOME="$toolchains/rustup"
 export CARGO_HOME="$toolchains/cargo" MOON_HOME="$state/moon-home"
@@ -57,8 +57,6 @@ export PATH="$(dirname "$cargo_bin"):$PATH"
 export CARGO_INSTALL_ROOT="$state/install-bin"
 mkdir -p "$CARGO_INSTALL_ROOT/bin"
 export PATH="$CARGO_INSTALL_ROOT/bin:$PATH"
-# Coverage tool: pinned per-repo install, probed exactly (never a shared PATH guess).
-repo_install_exact cargo-llvm-cov cargo-llvm-cov 0.9.1
 export ARTIFACT_ROOT="${ARTIFACT_ROOT:-$state/release-artifacts}"
 mkdir -p "$ARTIFACT_ROOT"
 [[ "$ARTIFACT_ROOT" = /* ]] || { echo "ARTIFACT_ROOT must be absolute" >&2; exit 2; }
