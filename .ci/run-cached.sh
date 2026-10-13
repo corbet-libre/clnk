@@ -35,7 +35,8 @@ for path in $wasm_llvm; do
   [ -x "$path/bin/llvm-ar" ] && wasm_ar="$path/bin/llvm-ar"
 done
 test -x "${wasm_cc:-}" && test -x "${wasm_ar:-}" || { echo 'unwrapped clang/llvm-ar not found' >&2; exit 2; }
-export CC_wasm32_unknown_unknown="$wasm_cc" AR_wasm32_unknown_unknown="$wasm_ar"
+mkdir -p "$ARTIFACT_ROOT"
+printf 'export CC_wasm32_unknown_unknown=%q AR_wasm32_unknown_unknown=%q\n' "$wasm_cc" "$wasm_ar" > "$ARTIFACT_ROOT/wasm-cc.env"
 export PROTO_HOME="$toolchains/proto" RUSTUP_HOME="$toolchains/rustup"
 export CARGO_HOME="$toolchains/cargo" MOON_HOME="$state/moon-home"
 export PROTO_AUTO_CLEAN=false PROTO_TELEMETRY=false PROTO_YES=true
