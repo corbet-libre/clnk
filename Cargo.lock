@@ -569,6 +569,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "cfbk"
+version = "0.0.0"
+source = "git+https://git.corbet.ch/corbet-foss/cfbk?branch=main#e03ed80f037b02dcedac1657c4fd23615bae3815"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -583,7 +588,7 @@ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 [[package]]
 name = "cfrm"
 version = "0.2.0"
-source = "git+https://git.corbet.ch/corbet-libs/cfrm.git?branch=main#6025933c0350616e0b93ae405279916b78de64fb"
+source = "git+https://git.corbet.ch/corbet-libs/cfrm.git?branch=main#b932fad1288ce8289c2fffcaec3480d052cc57aa"
 dependencies = [
  "cblv",
  "crbk",
@@ -603,13 +608,14 @@ dependencies = [
 [[package]]
 name = "cgrd"
 version = "0.0.0"
-source = "git+https://git.corbet.ch/corbet-foss/cgrd?branch=main#fabf73fadd927817754b1d2c7d4808a0a9e5a5a2"
+source = "git+https://git.corbet.ch/corbet-foss/cgrd?branch=main#203900ab71428b910092fb9b0ecc632ac483cae4"
 dependencies = [
  "bigdecimal",
  "cpns",
  "crbk",
  "csgn",
  "cshm",
+ "cvch",
  "ed25519-dalek",
  "geographiclib-rs",
  "precis-profiles",
@@ -793,7 +799,7 @@ checksum = "0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a"
 [[package]]
 name = "cnvl"
 version = "0.0.0"
-source = "git+https://git.corbet.ch/corbet-foss/cnvl.git?branch=main#c189819ab8b5a2ca0385afa20fc4ab8f4f5f43fe"
+source = "git+https://git.corbet.ch/corbet-foss/cnvl.git?branch=main#d784ea308c8fcedd4f574dfd306e3334c6ac8afb"
 dependencies = [
  "cgrd",
  "chacha20poly1305",
@@ -871,7 +877,7 @@ dependencies = [
 [[package]]
 name = "cpfl"
 version = "0.0.0"
-source = "git+https://git.corbet.ch/corbet-foss/cpfl.git?branch=main#9013cf411600ea78f9d89ccc54f4c81942f0a944"
+source = "git+https://git.corbet.ch/corbet-foss/cpfl.git?branch=main#8624b917070fdb0b96512dc01c97a69b854179d4"
 dependencies = [
  "blake3",
  "cgrd",
@@ -1050,7 +1056,7 @@ dependencies = [
 [[package]]
 name = "cswb"
 version = "0.1.0"
-source = "git+https://git.corbet.ch/corbet-foss/cswb.git?branch=main#667b86a9d7ead3c56a4720fbb11adb0f1095095f"
+source = "git+https://git.corbet.ch/corbet-foss/cswb.git?branch=main#70b1dbfabcd2ecc83f1412e71abe1ca54b3192ed"
 dependencies = [
  "cchr",
  "cmmr",
@@ -1115,6 +1121,25 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "cvch"
+version = "0.2.1"
+source = "git+https://git.corbet.ch/corbet-foss/cvch?branch=main#781cfff36a78af9539c835041f8f9d42b5ed9492"
+dependencies = [
+ "cfbk",
+ "csgn",
+ "ed25519-dalek",
+ "getrandom 0.4.3",
+ "hex",
+ "hmac 0.13.0",
+ "hpke",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "thiserror",
+ "zeroize",
 ]
 
 [[package]]
@@ -1285,6 +1310,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29fcf32e6c73d1079f83ab4d782de2d81620346a5f38c6237a86a22f8368980a"
 dependencies = [
+ "serdect",
  "signature 3.0.0",
 ]
 
@@ -1296,6 +1322,7 @@ checksum = "6ebaa1a2bf1290ab3bfe5a7b771d050ebffab2711c19a81691c683a5144a25de"
 dependencies = [
  "curve25519-dalek",
  "ed25519",
+ "serde",
  "sha2 0.11.1",
  "signature 3.0.0",
  "subtle",
