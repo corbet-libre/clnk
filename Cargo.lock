@@ -588,7 +588,7 @@ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 [[package]]
 name = "cfrm"
 version = "0.2.0"
-source = "git+https://git.corbet.ch/corbet-libs/cfrm.git?branch=main#b932fad1288ce8289c2fffcaec3480d052cc57aa"
+source = "git+https://git.corbet.ch/corbet-libs/cfrm.git?branch=main#c613ac64bcdfc8ff28d89a2dfb54c145dc320794"
 dependencies = [
  "cblv",
  "crbk",
