@@ -71,6 +71,7 @@ impl Attendance {
 #[derive(PartialEq, Eq)]
 pub struct Challenge {
     message: Vec<u8>,
+    record_context: Vec<u8>,
 }
 impl std::fmt::Debug for Challenge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -80,6 +81,12 @@ impl std::fmt::Debug for Challenge {
 impl Challenge {
     pub fn message(&self) -> &[u8] {
         &self.message
+    }
+    /// The service-selected record context (purpose, challenge, expiry) the
+    /// member's cached epoch record must be bound to, as the server sent it.
+    /// Untrusted bytes: the device's record owner decodes and bounds them.
+    pub fn record_context(&self) -> &[u8] {
+        &self.record_context
     }
 }
 /// One original owner-generated request and its immutable signing transcript.
@@ -229,9 +236,18 @@ impl<T: Transport, R> Link<T, R> {
             deadline: challenge.expires_at_ms,
         });
         attempt.finished = true;
-        Ok(Challenge { message })
+        Ok(Challenge {
+            message,
+            record_context: challenge.payload,
+        })
     }
-    pub async fn enter(&mut self, signature: Vec<u8>) -> Result<(), ErrorCode> {
+    /// Finish the pending challenge with the device signature and the member's
+    /// record presentation bound to `Challenge::record_context`.
+    pub async fn enter(
+        &mut self,
+        signature: Vec<u8>,
+        record_proof: Vec<u8>,
+    ) -> Result<(), ErrorCode> {
         if self.state() != State::Connecting {
             return Err(ErrorCode::ResetRequired);
         }
@@ -252,7 +268,7 @@ impl<T: Transport, R> Link<T, R> {
                     challenge: pending.wire,
                     signature,
                     publication: pending.publication,
-                    record_proof: vec![],
+                    record_proof,
                 }))
                 .await,
         )?;
